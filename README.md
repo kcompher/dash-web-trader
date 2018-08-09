@@ -1,4 +1,5 @@
 # dash-web-trader
+<<<<<<< HEAD
 
 This is a demo of the Dash interactive Python framework developed by [Plotly](https://plot.ly/).
 
@@ -34,7 +35,7 @@ source venv/bin/activate
 Clone the git repo, then install the requirements with pip
 ```
 git clone https://github.com/amadoukane96/dash-web-trader.git
-cd dash-regression
+cd dash-web-trader
 pip install -r requirements.txt
 ```
 
@@ -42,3 +43,5 @@ Run the app
 ```
 python app.py
 ```
+
+
