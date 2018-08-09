@@ -52,7 +52,7 @@ currencies = ["EURUSD", "USDCHF", "USDJPY", "GBPUSD"]  # list of currencies
 
 # returns logo div
 def get_logo():
-    image = "dash-logo-stripe.png"
+    image = "images/dash-logo-stripe.png"
     encoded_image = base64.b64encode(open(image, "rb").read())
     logo = html.Div(
         html.Img(
