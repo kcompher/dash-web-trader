@@ -758,7 +758,7 @@ def modal(pair):
                         ),
                         html.Span(
                             pair,
-                            id="modal_pair",
+                            id=pair+"modal_pair",
                             style={"marginBottom": "10", "color": "#45df7e"},
                         ),
 
