@@ -4,38 +4,23 @@ from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
-from array import *
-from os import getcwd
 import base64
 import json
 import plotly.plotly as py
 import plotly.graph_objs as go
 import datetime
 from plotly import tools
-import time
 import flask
 
 server = flask.Flask(__name__)
 app = dash.Dash(__name__, server=server)
 
-colors = {
-    "darkerBlue": "#18252E",
-    "lighterBlue": "#1a2d46",
-    "green": "#45df7e",
-    "red": "#da5657",
-    "very_light_blue": "#afdee4",
-    "grey": "#888888",
-    "flashy_green": "#00ff00",
-    "light_blue": "rgba(68,149,209,.9)",
-    "gradient_red": "linear-gradient(to bottom, rgba(255,0,0,0), rgba(255,0,0,1))",
-    "gradient_green": "linear-gradient(to bottom, rgba(0,255,0,0), rgba(0,255,0,1))",
-    "gradient_blue": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
-}
 
 external_css = [
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
     "https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css",
     "https://cdn.rawgit.com/amadoukane96/d930d574267b409a1357ea7367ac1dfc/raw/1108ce95d725c636e8f75e1db6e61365c6e74c8a/web_trader.css",
+    "https://use.fontawesome.com/releases/v5.2.0/css/all.css"
 ]
 
 for css in external_css:
@@ -72,7 +57,7 @@ def get_header(t=datetime.datetime.now()):
                 t.strftime("%H:%M:%S"),
                 id="live_clock",
                 className="four columns",
-                style={"color": colors["green"], "textAlign": "center"},
+                style={"color": "#45df7e", "textAlign": "center"},
             ),
             html.P(
                 "Bid",
@@ -94,9 +79,9 @@ def get_color(a, b):
     if a == b:
         return "white"
     elif a > b:
-        return colors["green"]
+        return "#45df7e"
     else:
-        return colors["red"]
+        return "#da5657"
 
 
 # returns row of given index for given currency pair dataset
@@ -166,6 +151,7 @@ def get_row(data):
                 ],
                 className="row",
             ),
+
             html.Button(
                 "Buy/Sell",
                 id=current_row[0] + "Buy",
@@ -229,7 +215,7 @@ def get_top_bar_cell(up, down, color="white"):
     return html.Div(
         [
             html.P(
-                up, style={"marginBottom": "1px", "color": colors["very_light_blue"]}
+                up, style={"marginBottom": "1px", "color": "#afdee4"}
             ),
             html.P(down, id=up, style={"marginBottom": "3"}),
         ],
@@ -409,8 +395,8 @@ def bar_trace(df):
         high=df["high"],
         low=df["low"],
         close=df["close"],
-        increasing=dict(line=dict(color=colors["grey"])),
-        decreasing=dict(line=dict(color=colors["grey"])),
+        increasing=dict(line=dict(color="#888888")),
+        decreasing=dict(line=dict(color="#888888")),
         showlegend=False,
         name="bar",
     )
@@ -435,7 +421,7 @@ def candlestick_trace(df):
         high=df["high"],
         low=df["low"],
         close=df["close"],
-        increasing=dict(line=dict(color=colors["flashy_green"])),
+        increasing=dict(line=dict(color="#00ff00")),
         decreasing=dict(line=dict(color="white")),
         showlegend=False,
         name="candlestick",
@@ -467,13 +453,13 @@ def get_modal_fig(currency_pair, index):
     fig["layout"]["width"] = 250
     fig["layout"]["margin"] = {"b": 0, "r": 5, "l": 50, "t": 5}
     fig["layout"].update(
-        paper_bgcolor=colors["darkerBlue"], plot_bgcolor=colors["darkerBlue"]
+        paper_bgcolor="#18252E", plot_bgcolor="#18252E"
     )
     return fig
 
 
 # returns graph figure
-def get_fig(currency_pair, ask, bid, type_trace, studies, period, nb_pair):
+def get_fig(currency_pair, ask, bid, type_trace, studies, period):
     df = get_OHLC_data(currency_pair, period)
     subplot_traces = [  # first row traces
         "accumulation_trace",
@@ -482,12 +468,18 @@ def get_fig(currency_pair, ask, bid, type_trace, studies, period, nb_pair):
         "stoc_trace",
         "mom_trace",
     ]
+    selected_subplots_studies = []
+    selected_first_row_studies = []
     row = 1  # number of subplots
 
     if studies != []:
         for study in studies:
             if study in subplot_traces:
                 row += 1  # increment number of rows only if the study needs a subplot
+                selected_subplots_studies.append(study)
+            else:
+                selected_first_row_studies.append(study)
+
 
     fig = tools.make_subplots(
         rows=row,
@@ -501,40 +493,28 @@ def get_fig(currency_pair, ask, bid, type_trace, studies, period, nb_pair):
         globals()[type_trace](df), 1, 1  # add main trace (style) to figure
     )
 
+    
+    for study in selected_first_row_studies:
+        fig = globals()[study](df, fig)  # add trace(s) on fig's first row
+    
     row = 1
-    if studies != []:
-        for study in studies:
-            if study not in subplot_traces:
-                fig = globals()[study](df, fig)  # add trace(s) on fig's first row
-            else:
-                row += 1
-                fig.append_trace(globals()[study](df), row, 1)  # plot trace on new row
+    for study in selected_subplots_studies:
+        row += 1
+        fig.append_trace(globals()[study](df), row, 1)  # plot trace on new row
+    
 
-    fig["layout"]["margin"] = {"b": 20, "r": 5, "l": 45, "t": 3}
-
-    fig["layout"]["height"] = (
-        400 if nb_pair in [1, 2, 3] else 180  # set height based on number of charts
-    )
-
-    fig["layout"]["width"] = (
-        970
-        if nb_pair == 1
-        else 310
-        if nb_pair == 3
-        else 480  # set width based on number of charts
-    )
-
+    fig["layout"]["margin"] = {"b": 50, "r": 5, "l": 50, "t": 5}    
     fig["layout"]["xaxis"]["rangeslider"]["visible"] = False
     fig["layout"]["xaxis"]["tickformat"] = "%H:%M"
     fig["layout"].update(
-        paper_bgcolor=colors["darkerBlue"], plot_bgcolor=colors["darkerBlue"]
+        paper_bgcolor="#18252E", plot_bgcolor="#18252E"
     )
     return fig
 
 
 # updates figure
-def replace_fig(currency_pair, ask, bid, type_trace, period, old_fig, nb_pair, studies):
-    fig = get_fig(currency_pair, ask, bid, type_trace, studies, period, nb_pair)
+def replace_fig(currency_pair, ask, bid, type_trace, period, old_fig, studies):
+    fig = get_fig(currency_pair, ask, bid, type_trace, studies, period)
     fig["layout"]["xaxis"]["range"] = old_fig["layout"]["xaxis"][
         "range"
     ]  # replace zoom on xaxis, yaxis is autoscaled
@@ -657,8 +637,8 @@ def chart_div(pair):
                 className="not_visible ",
                 style={
                     "overflow": "auto",
-                    "borderRight": "1px solid" + colors["light_blue"],
-                    "backgroundImage": colors["gradient_blue"],
+                    "borderRight": "1px solid" + "rgba(68,149,209,.9)",
+                    "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
                     "zIndex": "20",
                     "width": "45%",
                     "height": "100%",
@@ -707,7 +687,7 @@ def chart_div(pair):
                     "padding": "3",
                     "height": "20px",
                     "margin": "0 0 5 0",
-                    "backgroundImage": colors["gradient_blue"],
+                    "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
                 },
             ),
 
@@ -716,9 +696,10 @@ def chart_div(pair):
                 dcc.Graph(
                     id=pair + "chart",
                     config={"displayModeBar": False, "scrollZoom": True},
-                    style={"width": "100%"},
+                    style={"width": "100%","height":"100%"},
                 ),
                 id=pair + "graph",
+                style={"height":"100%"}
             ),
 
         ],
@@ -753,7 +734,7 @@ def bottom_panel():
             "margin": "9px 5px 0px 5px",
             "padding": "5",
             "height": "21%",
-            "backgroundColor": colors["lighterBlue"],
+            "backgroundColor": "#1a2d46",
         },
     )
 
@@ -778,7 +759,7 @@ def modal(pair):
                         html.Span(
                             pair,
                             id="modal_pair",
-                            style={"marginBottom": "10", "color": colors["green"]},
+                            style={"marginBottom": "10", "color": "#45df7e"},
                         ),
 
 
@@ -924,9 +905,9 @@ def orders_rows(list_order, status):
                 if order["status"] == status:
                     tr_childs.append(html.Td(order[attr]))
             order_style = {
-                "background": colors["gradient_red"]  # set background based on profit
+                "background": "linear-gradient(to bottom, rgba(255,0,0,0), rgba(255,0,0,1))"  # set background based on profit
                 if float(order["profit"]) < 0
-                else colors["gradient_green"]
+                else "linear-gradient(to bottom, rgba(0,255,0,0), rgba(0,255,0,1))"
             }
             rows.append(html.Tr(tr_childs, style=order_style))
 
@@ -953,7 +934,7 @@ app.layout = html.Div(
                 get_logo(),
                 html.Div(
                     children=[get_header()],
-                    style={"backgroundColor": colors["darkerBlue"]},
+                    style={"backgroundColor": "#18252E"},
                     id="ask_bid_header",
                     className="row",
                 ),
@@ -961,7 +942,7 @@ app.layout = html.Div(
                     get_first_pairs(datetime.datetime.now()),
                     style={
                         "height": "388",
-                        "backgroundColor": colors["darkerBlue"],
+                        "backgroundColor": "#18252E",
                         "color": "white",
                         "fontSize": "12",
                     },
@@ -971,7 +952,7 @@ app.layout = html.Div(
             ],
             className="three columns",
             style={
-                "backgroundColor": colors["lighterBlue"],
+                "backgroundColor": "#1a2d46",
                 "padding": "10",
                 "margin": "0",
             },
@@ -991,7 +972,7 @@ app.layout = html.Div(
                         "textAlign": "center",
                         "height": "6%",
                         "color": "white",
-                        "backgroundColor": colors["lighterBlue"],
+                        "backgroundColor": "#1a2d46",
                     },
                 ),
 
@@ -1007,7 +988,7 @@ app.layout = html.Div(
             className="nine columns",
             id="rightpanel",
             style={
-                "backgroundColor": colors["darkerBlue"],
+                "backgroundColor": "#18252E",
                 "height": "100vh",
                 "color": "white",
             },
@@ -1024,7 +1005,7 @@ app.layout = html.Div(
             id="orders", style={"display": "none"}  # hidden div that stores all orders,
         ),
     ],
-    style={"padding": "0", "height": "100vh", "backgroundColor": colors["lighterBlue"]},
+    style={"padding": "0", "height": "100vh", "backgroundColor": "#1a2d46"},
 )
 
 # dynamic callbacks
@@ -1066,12 +1047,10 @@ def generate_figure_callback(pair):
                 "data": {},
             }  # we only update figure when the div is displayed
 
-        nb_pair = len(pairs)
-
         if old_fig is None or old_fig == {"layout": {}, "data": {}}:
-            return get_fig(pair, a, b, t, s, p, nb_pair)
+            return get_fig(pair, a, b, t, s, p)
 
-        return replace_fig(pair, a, b, t, p, old_fig, nb_pair, s)
+        return replace_fig(pair, a, b, t, p, old_fig, s)
 
     return chart_fig_callback
 
@@ -1133,9 +1112,9 @@ def generate_style_content_tab_callback():
 def generate_update_studies_header_callback():
     def studies_header(current_tab, old_style):
         if current_tab == "Studies":
-            old_style["borderBottom"] = "2px solid" + colors["green"]
+            old_style["borderBottom"] = "2px solid" + " " + "#45df7e"
         else:
-            old_style["borderBottom"] = "2px solid" + colors["light_blue"]
+            old_style["borderBottom"] = "2px solid" + " " + "rgba(68,149,209,.9)"
         return old_style
 
     return studies_header
@@ -1145,9 +1124,9 @@ def generate_update_studies_header_callback():
 def generate_update_style_header_callback():
     def style_header(current_tab, old_style):
         if current_tab == "Style":
-            old_style["borderBottom"] = "2px solid" + colors["green"]
+            old_style["borderBottom"] = "2px solid" + " " + "#45df7e"
         else:
-            old_style["borderBottom"] = "2px solid" + colors["light_blue"]
+            old_style["borderBottom"] = "2px solid" + " " + "rgba(68,149,209,.9)"
         return old_style
 
     return style_header
@@ -1187,11 +1166,10 @@ def generate_clean_tp_callback():
 
 
 def generate_modal_figure_callback(pair):
-    def figure_modal(index, n):
-        if n == 0:
-            return {"layout": {}, "data": {}}
-        return get_modal_fig(pair, index)
-
+    def figure_modal(index, n,old_fig):
+        if (n == 0 and old_fig is None) or n==1:
+            return get_modal_fig(pair, index)
+        return old_fig #avoid to compute new figure when the modal is hidden
     return figure_modal
 
 
@@ -1234,7 +1212,6 @@ def generate_order_button_callback(pair):
     return order_callback
 
 
-# ask pour les sell
 def update_orders(orders, current_bids, current_asks, id_to_close):
     for order in orders:
         if order["status"] == "open":
@@ -1255,7 +1232,7 @@ def update_orders(orders, current_bids, current_asks, id_to_close):
             )
 
             order["profit"] = "%.2f" % profit
-            price = current_bid if order["type"] == "buy" else ask
+            price = current_bid if order["type"] == "buy" else current_ask
 
             if order["id"] == id_to_close:
                 order["status"] = "closed"
@@ -1333,7 +1310,7 @@ def generate_show_hide_graph_div_callback(pair):
                     "position": "relative",
                     "float": "left",
                     "border": "1px solid",
-                    "borderColor": colors["light_blue"],
+                    "borderColor": "rgba(68,149,209,.9)",
                     "overflow": "hidden",
                     "marginBottom": "2px",
                 }
@@ -1350,6 +1327,7 @@ def generate_show_hide_graph_div_callback(pair):
     return show_hide_graph_callback
 
 
+#Resize pair div according to the number of charts displayed
 def generate_size_graph_div_callback(pair):
     def size_graph_div_callback(charts_clicked):
         if charts_clicked is None:
@@ -1490,6 +1468,7 @@ for pair in currencies:
     app.callback(
         Output(pair + "modal_graph", "figure"),
         [Input(pair + "index", "children"), Input(pair + "Buy", "n_clicks")],
+        [State(pair + "modal_graph", "figure")],
     )(generate_modal_figure_callback(pair))
 
     # each pair saves its orders in hidden div
@@ -1543,13 +1522,13 @@ def update_order_table(orders, url):
 def update_link_style_open(url):
     style = (
         {
-            "borderBottom": "2px solid" + colors["green"],
+            "borderBottom": "2px solid" + " " + "#45df7e",
             "textDecoration": "none",
             "color": "white",
         }
         if url == "/"
         else {
-            "borderBottom": "2px solid" + colors["light_blue"],
+            "borderBottom": "2px solid" + " " + "rgba(68,149,209,.9)",
             "textDecoration": "none",
             "color": "white",
         }
@@ -1575,14 +1554,14 @@ def update_link_label_open(url, orders):
 def update_link_style_closed(url):
     style = (
         {
-            "borderBottom": "2px solid" + colors["green"],
+            "borderBottom": "2px solid" + " " + "#45df7e",
             "textDecoration": "none",
             "marginLeft": "10",
             "color": "white",
         }
         if url == "/closed"
         else {
-            "borderBottom": "2px solid" + colors["light_blue"],
+            "borderBottom": "2px solid" + " " + "rgba(68,149,209,.9)",
             "textDecoration": "none",
             "marginLeft": "10",
             "color": "white",
