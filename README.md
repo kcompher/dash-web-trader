@@ -5,7 +5,7 @@ Dash abstracts away all of the technologies and protocols required to build an i
 
 Try out the [demo app here](https://dash-web-trader.herokuapp.com/).
 
-![animated1](images/web-trader.gif)
+![animated1](images/webtrader.gif)
 
 ## Getting Started
 
@@ -41,5 +41,3 @@ Run the app
 ```
 python app.py
 ```
-
-
