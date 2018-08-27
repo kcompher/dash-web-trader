@@ -5,7 +5,7 @@ Dash abstracts away all of the technologies and protocols required to build an i
 
 Try out the [demo app here](https://dash-web-trader.herokuapp.com/).
 
-![animated1](images/webtrader.gif)
+![animated1](images/dash-web-trader.gif)
 
 ## Getting Started
 
