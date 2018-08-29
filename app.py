@@ -258,7 +258,7 @@ def get_OHLC_data(currency_pair, period="5Min"):
 # Moving average
 def moving_average_trace(df, fig):
     df2 = df.rolling(window=5).mean()
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df2.index, y=df2["close"], mode="lines", showlegend=False, name="MA"
     )
     fig.append_trace(trace, 1, 1)  # plot in first row
@@ -268,7 +268,7 @@ def moving_average_trace(df, fig):
 # Exponential moving average
 def e_moving_average_trace(df, fig):
     df2 = df.rolling(window=20).mean()
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df2.index, y=df2["close"], mode="lines", showlegend=False, name="EMA"
     )
     fig.append_trace(trace, 1, 1)  # plot in first row
@@ -283,15 +283,15 @@ def bollinger_trace(df, fig, window_size=10, num_of_std=5):
     upper_band = rolling_mean + (rolling_std * num_of_std)
     lower_band = rolling_mean - (rolling_std * num_of_std)
 
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df.index, y=upper_band, mode="lines", showlegend=False, name="BB_upper"
     )
 
-    trace2 = go.Scattergl(
+    trace2 = go.Scatter(
         x=df.index, y=rolling_mean, mode="lines", showlegend=False, name="BB_mean"
     )
 
-    trace3 = go.Scattergl(
+    trace3 = go.Scatter(
         x=df.index, y=lower_band, mode="lines", showlegend=False, name="BB_lower"
     )
 
@@ -306,7 +306,7 @@ def accumulation_trace(df):
     df["volume"] = ((df["close"] - df["low"]) - (df["high"] - df["close"])) / (
         df["high"] - df["low"]
     )
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df.index, y=df["volume"], mode="lines", showlegend=False, name="Accumulation"
     )
     return trace
@@ -320,7 +320,7 @@ def cci_trace(df, ndays=5):
         / (0.015 * TP.rolling(window=10, center=False).std()),
         name="cci",
     )
-    trace = go.Scattergl(x=df.index, y=CCI, mode="lines", showlegend=False, name="CCI")
+    trace = go.Scatter(x=df.index, y=CCI, mode="lines", showlegend=False, name="CCI")
     return trace
 
 
@@ -329,21 +329,21 @@ def roc_trace(df, ndays=5):
     N = df["close"].diff(ndays)
     D = df["close"].shift(ndays)
     ROC = pd.Series(N / D, name="roc")
-    trace = go.Scattergl(x=df.index, y=ROC, mode="lines", showlegend=False, name="ROC")
+    trace = go.Scatter(x=df.index, y=ROC, mode="lines", showlegend=False, name="ROC")
     return trace
 
 
 # Stochastic oscillator %K
 def stoc_trace(df):
     SOk = pd.Series((df["close"] - df["low"]) / (df["high"] - df["low"]), name="SO%k")
-    trace = go.Scattergl(x=df.index, y=SOk, mode="lines", showlegend=False, name="SO%k")
+    trace = go.Scatter(x=df.index, y=SOk, mode="lines", showlegend=False, name="SO%k")
     return trace
 
 
 # Momentum
 def mom_trace(df, n=5):
     M = pd.Series(df["close"].diff(n), name="Momentum_" + str(n))
-    trace = go.Scattergl(x=df.index, y=M, mode="lines", showlegend=False, name="MOM")
+    trace = go.Scatter(x=df.index, y=M, mode="lines", showlegend=False, name="MOM")
     return trace
 
 
@@ -356,13 +356,13 @@ def pp_trace(df, fig):
     S2 = pd.Series(PP - df["high"] + df["low"])
     R3 = pd.Series(df["high"] + 2 * (PP - df["low"]))
     S3 = pd.Series(df["low"] - 2 * (df["high"] - PP))
-    trace = go.Scattergl(x=df.index, y=PP, mode="lines", showlegend=False, name="PP")
-    trace1 = go.Scattergl(x=df.index, y=R1, mode="lines", showlegend=False, name="R1")
-    trace2 = go.Scattergl(x=df.index, y=S1, mode="lines", showlegend=False, name="S1")
-    trace3 = go.Scattergl(x=df.index, y=R2, mode="lines", showlegend=False, name="R2")
-    trace4 = go.Scattergl(x=df.index, y=S2, mode="lines", showlegend=False, name="S2")
-    trace5 = go.Scattergl(x=df.index, y=R3, mode="lines", showlegend=False, name="R3")
-    trace6 = go.Scattergl(x=df.index, y=S3, mode="lines", showlegend=False, name="S3")
+    trace = go.Scatter(x=df.index, y=PP, mode="lines", showlegend=False, name="PP")
+    trace1 = go.Scatter(x=df.index, y=R1, mode="lines", showlegend=False, name="R1")
+    trace2 = go.Scatter(x=df.index, y=S1, mode="lines", showlegend=False, name="S1")
+    trace3 = go.Scatter(x=df.index, y=R2, mode="lines", showlegend=False, name="R2")
+    trace4 = go.Scatter(x=df.index, y=S2, mode="lines", showlegend=False, name="S2")
+    trace5 = go.Scatter(x=df.index, y=R3, mode="lines", showlegend=False, name="R3")
+    trace6 = go.Scatter(x=df.index, y=S3, mode="lines", showlegend=False, name="S3")
     fig.append_trace(trace, 1, 1)
     fig.append_trace(trace1, 1, 1)
     fig.append_trace(trace2, 1, 1)
@@ -375,14 +375,14 @@ def pp_trace(df, fig):
 
 ## MAIN CHART TRACES (STYLE tab)
 def line_trace(df):
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df.index, y=df["close"], mode="lines", showlegend=False, name="line"
     )
     return trace
 
 
 def area_trace(df):
-    trace = go.Scattergl(
+    trace = go.Scatter(
         x=df.index, y=df["close"], showlegend=False, fill="toself", name="area"
     )
     return trace
@@ -431,13 +431,13 @@ def candlestick_trace(df):
 # For buy/sell modal
 def ask_modal_trace(currency_pair, index):
     df = get_ask_bid(currency_pair, index, True)  # returns ten rows
-    return go.Scattergl(x=df.index, y=df["Ask"], mode="lines", showlegend=False)
+    return go.Scatter(x=df.index, y=df["Ask"], mode="lines", showlegend=False)
 
 
 # For buy/sell modal
 def bid_modal_trace(currency_pair, index):
     df = get_ask_bid(currency_pair, index, True)  # returns ten rows
-    return go.Scattergl(x=df.index, y=df["Bid"], mode="lines", showlegend=False)
+    return go.Scatter(x=df.index, y=df["Bid"], mode="lines", showlegend=False)
 
 
 # returns modal figure for a currency pair
